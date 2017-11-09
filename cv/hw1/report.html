@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.6.1">
+<meta name="author" content="Dingcheng Yue (dy276@cam.ac.uk)">
+<title>L44 computer Vision Report for Exercise 1</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<link rel="stylesheet" href="./asciidoctor.css">
+</head>
+<body class="article">
+<div id="header">
+<h1>L44 computer Vision Report for Exercise 1</h1>
+<div class="details">
+<span id="author" class="author">Dingcheng Yue (dy276@cam.ac.uk)</span><br>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="_part_1_camera_calibration">Part 1: Camera Calibration</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_model_explanation">Model explanation</h3>
+<div class="paragraph">
+<p>For Camera Calibration, there are many possible optical distortions including
+radial distortions, chromatic calibrations. However, if we assume that these
+optical distortions are negligible, we could establish the following
+relationship using pinhole camera model.</p>
+</div>
+<div id="camera" class="stemblock">
+<div class="content">
+\$[[us], [vs], [s]] = K[R|T] [[x], [y], [z], [1]]\$
+</div>
+</div>
+<div class="paragraph">
+<p>Here we use homogeneous coordinates for this relationship. Here \$(x,y,z)\$
+is the coordinate of a point in the 3D world. And \$(u,v)\$ is the pixel
+coordinate of the corresponding point projecting on the image plane. We could
+parametrise this projection by multiplying 2 matrix \$K\$ and \$[R|T\$]
+which are camera&#8217;s intrinsic parameters and extrinsic parameters respectively.</p>
+</div>
+<div class="paragraph">
+<p>\$K\$ would be written as</p>
+</div>
+<div id="K" class="stemblock">
+<div class="content">
+\$K = [[f * m_x, gamma, u_0], [0, f * m_y, v_0], [0, 0, 1]]\$
+</div>
+</div>
+<div class="paragraph">
+<p>Here, \$f\$ is the focal length, \$m_x, m_y\$ are the scale factors
+relating to pixels to focal length. \$gamma\$ are the skew coefficient between
+x and y axis. \$u_0, v_0\$ represent the principle point corresponding to the
+center respect to all the pixel coordinates. The parameters are specific to the
+camera, and will remain the same across different images.</p>
+</div>
+<div class="paragraph">
+<p>The extrinsic matrix could be written as</p>
+</div>
+<div id="R" class="stemblock">
+<div class="content">
+\$T = [[x],[y],[z]],
+R = [[1,0,0],[0,cos(T_1),-sin(T_1)],[0,sin(T_1),cos(T_1)]]
+[[cos(T_2),0,sin(T_2)],[0,1,0],[-sin(T_2),0,cos(T_2)]]
+[[cos(T_3),-sin(T_3),0],[sin(T_3),cos(T_3),0],[0,0,1]]\$
+</div>
+</div>
+<div class="paragraph">
+<p>The extrinsic parameters is made up of of a translational components \$T\$
+(3DOF) and a rotational matrix \$R\$ (3DOF). This combination determines
+where is the focal point of the camera in the world and on what angle it takes
+the image.</p>
+</div>
+<div class="paragraph">
+<p>There are also optics distortions. For opencv calibrations algorithm, it also
+takes into account the radial distortions and tangential distortions which could
+be approximated by 6 parameters \$k_1, k_2, p_1, p_2, k_3\$.</p>
+</div>
+<div class="paragraph">
+<p>The opencv library use the checkerboard images to determine the intrinsic
+parameters of the matrix. It first takes several images of a chessboard at
+different position. For each grid point on the chessboard, opencv library could
+easily find the pixel coordinates with respect to each of the image using corner
+detection and chessboard constraint. For my experiment, I use the checkerboard
+of size \$8xx6\$.</p>
+</div>
+<div id="img-checkboard" class="openblock text-center">
+<div class="title">corner detected on a checkerboard</div>
+<div class="content">
+<div class="paragraph">
+<p><span class="image"><img src="result/checkerboard.png" alt="checkboard" width="200" height="auto"></span>
+<span class="image"><img src="result/checkerboard2.png" alt="checkboard" width="200" height="auto"></span></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>For all images, the intrinsic camera position and the world coordinates of each
+point remains constant. We could setup for each point across all images with the
+following equation given the pinhole camera model:</p>
+</div>
+<div class="stemblock">
+<div class="content">
+\$(x_(im)-u_0)(T_2^TP_w+T_y)-(y_(im)-v_0)alpha(R_1^TP_w+T_x) = 0\$
+</div>
+</div>
+<div class="paragraph">
+<p>where \$x_(im), y_(im)\$ are pixel coordinate and \$P_w\$ are the world
+coordinates. With enough equations, we could solve a system of equation with
+unknowns: \$R_2^T, T_y, alpha R_1^T, alpha T_x\$. Thus, we could get the
+remaining results following on.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_parameter_estimation">Parameter Estimation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>For our experiment, here are the approximated intrinsic matrix.</p>
+</div>
+<div class="stemblock">
+<div class="content">
+\${:
+(f*m_x ,=, 4.573xx10^3),
+(f*m_y ,=, 1.015xx10^3),
+(gamma ,=, 0),
+(u_0 ,=, 2.625xx10^2),
+(v_0 ,=, 2.011xx10^2)
+:}\$
+</div>
+</div>
+<div class="paragraph">
+<p>We also got the none linear distortions parameters:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2858%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">id</th>
+<th class="tableblock halign-left valign-top">T1</th>
+<th class="tableblock halign-left valign-top">T2</th>
+<th class="tableblock halign-left valign-top">T3</th>
+<th class="tableblock halign-left valign-top">X</th>
+<th class="tableblock halign-left valign-top">Y</th>
+<th class="tableblock halign-left valign-top">Z</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.2226</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.915</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.02</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.987</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-2.001</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">77.29</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.2429</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.893</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.019</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.872</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-2.953</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">75.20</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-0.3078</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-2.020</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.697</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.167</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-7.333</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">38.00</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">0.07550</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-2.058</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.176</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.467</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-0.6657</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">96.37</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-0.5890</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-1.760</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.676</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1.693</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-6.797</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">102.6</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_part_2_perspective_projection">Part 2 Perspective Projection</h2>
+<div class="sectionbody">
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+<div class="title">Alternative Approach Note</div>
+<div class="paragraph">
+<p>For this problem, I used to have harris corner detector to detect the corner of
+the image, and I used the fact that the four corners of my stamp could easily
+form a reasonable square, however, the method is not as robust as feature
+mapping. Thus, it is not presented in the write up. Details of this
+implementation was still kept in the code <code>hw1.py</code>.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_process">Process</h3>
+<div class="paragraph">
+<p>We first take a reference image that we want to wrap our stamp to.</p>
+</div>
+<div id="img-ref" class="openblock text-center">
+<div class="content">
+<div class="paragraph">
+<p><span class="image"><img src="stamp-pos.jpg" alt="ref" width="100" height="100"></span></p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_feature_extraction">feature extraction</h4>
+<div class="paragraph">
+<p>For this, I first create extract the points of interests using <code>SIFT</code>. In
+<code>SIFT</code> method, the keypoints are from the extrema of the difference of Gaussian
+from multiple scales. It then stores as keypoint descriptor by a set of
+historgram so that it is robust to affine transformation and illumination
+changes. Here are the results after keypoints matching. I use the
+<code>sift.detectAndCompute</code> function for this task.</p>
+</div>
+<div id="img-kp" class="openblock text-center">
+<div class="title">key points matching</div>
+<div class="content">
+<div class="paragraph">
+<p><span class="image"><img src="result/keypoints1.png" alt="kp1" width="200" height="auto"></span>
+<span class="image"><img src="result/keypoints2.png" alt="kp2" width="200" height="auto"></span>
+<span class="image"><img src="result/keypoints3.png" alt="kp3" width="200" height="auto"></span>
+<span class="image"><img src="result/keypoints5.png" alt="kp5" width="200" height="auto"></span></p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_feature_matching">feature matching</h4>
+<div class="paragraph">
+<p>The next step is to match the features from the image to the ideal warp image.
+We try to find to find corresponding features that are most similar to the ideal stamp
+image. To speed up process, we used <strong>FLANN</strong> to match features. We also filter
+out of matching pairs whose similar has less than 0.7. We then have the
+following image:</p>
+</div>
+<div id="img-fm" class="openblock text-center">
+<div class="title">feature matching</div>
+<div class="content">
+<div class="paragraph">
+<p><span class="image"><img src="result/featurematch01.png" alt="fm1" width="200" height="auto"></span>
+<span class="image"><img src="result/featurematch02.png" alt="fm2" width="200" height="auto"></span>
+<span class="image"><img src="result/featurematch03.png" alt="fm3" width="200" height="auto"></span>
+<span class="image"><img src="result/featurematch05.png" alt="fm5" width="200" height="auto"></span></p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_find_perspective_transformation_with_ransac">Find Perspective Transformation with RANSAC</h4>
+<div class="paragraph">
+<p>Calculating a perspective transformation matrix requires only 4 points, but we
+have more points than necessary, and we also have many mismatches in the image.
+We use a statistical method called <strong>Random Sample Consensus</strong> to filter out
+outliers. We called the function <code>homography</code> for this.</p>
+</div>
+<div id="img-match" class="openblock text-center">
+<div class="title">matches without outliers</div>
+<div class="content">
+<div class="paragraph">
+<p><span class="image"><img src="result/featurematch1.png" alt="fm1" width="200" height="auto"></span>
+<span class="image"><img src="result/featurematch2.png" alt="fm2" width="200" height="auto"></span>
+<span class="image"><img src="result/featurematch3.png" alt="fm3" width="200" height="auto"></span>
+<span class="image"><img src="result/featurematch5.png" alt="fm5" width="200" height="auto"></span></p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_perspective_transformation">Perspective Transformation</h4>
+<div class="paragraph">
+<p>Lastly after we find the matching points, we could easily transform the stamp
+using the calculated homography matrix using <code>warpPerspective</code> function.</p>
+</div>
+<div id="img-final" class="openblock text-center">
+<div class="title">final transformation</div>
+<div class="content">
+<div class="paragraph">
+<p><span class="image"><img src="result/topdown1.png" alt="td1" width="100" height="auto"></span>
+<span class="image"><img src="result/topdown2.png" alt="td2" width="100" height="auto"></span>
+<span class="image"><img src="result/topdown3.png" alt="td3" width="100" height="auto"></span>
+<span class="image"><img src="result/topdown5.png" alt="td5" width="100" height="auto"></span></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_questions">Questions</h3>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>Under what conditions are 3, rather than 4 or more, points on the object suffice
+to perform a perspective correction?</p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>Given only three points, we could determine 6 degrees of freedom. As a
+general perspective transformation, there will be 8 degrees of freedom. However,
+if the stamp is far away from the camera, we could invoke weak perspective
+assumption, i.e. all points lie at approximately the same depth from the
+camera. In this assumption, the perspective transformation could be approximated
+as the affine transformation and three points would be suffice.</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>How could the knowledge of the intrinsic matrix and extrinsic camera parameters
+lead to an improved solution?</p>
+</div>
+</blockquote>
+</div>
+<div class="paragraph">
+<p>With the knowledge of the intrinsic matrix and extrinsic camera parameters, we
+could accurately construct the perspective matrix without fitting the matching
+points. Suppose the intrinsic matrix is \$K\$ and the extrinsic parameters of
+the stamp image is \$[R_1|T_1]\$, and for a top down view of the stamp we
+could take image at \$[R_2|T_2]\$. And the world coordinate is \$P\$, and
+the pixel coordinates are respectively \$V_1\$ and \$V_2\$, then we have:</p>
+</div>
+<div class="stemblock">
+<div class="content">
+\${:
+(V_1 ,=, K[R_1|T_1]P),
+(V_2 ,=, K[R_2|T_2]P)
+:}\$
+</div>
+</div>
+<div class="paragraph">
+<p>And, thus we could easily derive our perspective wrapping matrix
+\$K[R_1|T_1][R_2^T|-R_2^T T_2]K^(-1)\$ without the need for point match.
+This is an improved solution since it gets rid of all the error caused by point
+matching.</p>
+</div>
+<div class="stemblock">
+<div class="content">
+\${:
+(V_1 = K[R_1|T_1][R_2|T_2]^(-1)K^(-1) V_2),
+(V_1 = K[R_1|T_1][R_2^T|-R_2^T T_2]K^(-1)V_2)
+:}\$
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2017-11-01 12:31:34 GMT
+</div>
+</div>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  messageStyle: "none",
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]],
+    ignoreClass: "nostem|nolatexmath"
+  },
+  asciimath2jax: {
+    delimiters: [["\\$", "\\$"]],
+    ignoreClass: "nostem|noasciimath"
+  },
+  TeX: { equationNumbers: { autoNumber: "none" } }
+});
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.6.0/MathJax.js?config=TeX-MML-AM_HTMLorMML"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+Bundler.require :default
+
+guard :shell, :all_on_start => true do
+  watch(/^.+\.adoc$/) {|m|
+    Asciidoctor.convert_file m[0]
+  }
+end
+
+guard :livereload do
+  watch(/^.+\.(html|css|js)$/)
+end
+
+guard 'process', :name => 'server', :command => 'http-server' do
+  watch('Gemfile.lock')
+end

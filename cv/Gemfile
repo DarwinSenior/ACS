@@ -1,0 +1,11 @@
+source 'https://rubygems.org'
+
+gem 'guard'
+gem 'guard-livereload'
+gem 'guard-shell'
+gem 'guard-process'
+gem 'asciidoctor'
+gem 'asciimath'
+gem 'rack-livereload'
+
+

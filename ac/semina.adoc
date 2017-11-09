@@ -1,0 +1,53 @@
+= Affective Computing, Emotional Development and Autism
+
+== Abstract
+
+=== Introductions and Motivations
+
+==== Affective computing and child development
+affective computing and child development:
+1. Non-verbal communication less impacted by social display rules
+2. Interventions could help children develop optimally
+
+==== affective computing and development of ASD
+ASD - Autism Spectrum Disorders
+1. objective:  dection and modeling of emotion / interventions
+2. object: children with ASD and their high-risk sibling
+3. reason: symptons merges before age3 / siblings offer a prospective view
+TODO:change it
+
+=== Automated Measurement of Emotional Behaviour
+
+==== Automated Facial Measurement
+1. manual measurement of facial expression is laborious and resourcce-intensive
+2. use facial action coding system
+3. common pipeline: AASMs + SVM
+
+==== Emotion Measurement via Continuous Ratings
+
+
+==== Applying Automated and other measurement to early emotion expression
+==== modeling emotional communication
+==== machine learning approaches to modeling dyadic interaction
+==== modeling vocal interactions with cross-recurrence quantification analysis
+==== electrodermal activity, measurement and Applications to ASD
+=== Translational Applications of Affective Computing to Children with ASD
+==== embodies conversational agents
+==== Robots and Autism
+1. purpose: understand affective, communicative and social difference with ASD,
+develop novel interventions and enhance existing treatments for children with
+ASD
+2. advantages: ASD show a preference for robot likke characteristics / capable
+of utilising physical motion compared to screen technologies
+=== Conclusion and discussion of alternative approaches
+==== overview
+==== facial expression
+==== vocalisations and electrodermal activations
+==== multi-modal fusion
+==== modeling advances
+==== what modeling approach is most appropriate
+==== modeling to detect interaction
+==== modeling to simulate development
+==== software agents
+==== robots
+==== ethics and outcomes in a changing world
